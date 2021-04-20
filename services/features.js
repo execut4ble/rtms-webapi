@@ -58,11 +58,11 @@ const createFeature = (request, response, next) => {
 
   pool
     .query(
-      `INSERT INTO "feature" (name, description, sprint, ticket, slug, created_by, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      `INSERT INTO "feature" (name, description, sprint, ticket, slug, created_by, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
       [name, description, sprint, ticket, slug, created_by, created_date]
     )
     .then((results) => {
-      response.status(201).send(`Feature added with ID: ${results.rows[0].id}`);
+      response.status(201).json(results.rows[0]);
     })
     .catch((e) => {
       if (e.code == "23505") {
