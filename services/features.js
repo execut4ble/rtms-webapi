@@ -9,6 +9,10 @@ const pool = new Pool({
   port: config.pgport,
 });
 
+function unixTimeStamp() {
+  return Math.floor(+new Date() / 1000);
+}
+
 const getFeatures = (request, response, next) => {
   pool
     .query(
@@ -34,7 +38,7 @@ const getFeatureInfo = (request, response, next) => {
       `SELECT feature.*, created.username AS created_user, modified.username AS modified_user 
       FROM "feature" 
       INNER JOIN "user" AS created ON created_by = created.id 
-      INNER JOIN "user" AS modified ON last_modified_by = modified.id
+      LEFT JOIN "user" AS modified ON last_modified_by = modified.id
       WHERE feature.id = $1 
       ORDER BY feature.id ASC`,
       [id]
@@ -48,12 +52,14 @@ const getFeatureInfo = (request, response, next) => {
 };
 
 const createFeature = (request, response, next) => {
-  const { name, slug, created_by } = request.body;
+  const { name, description, sprint, ticket, slug, created_by } = request.body;
+
+  const created_date = unixTimeStamp();
 
   pool
     .query(
-      `INSERT INTO "feature" (name, slug, created_by) VALUES ($1, $2, $3) RETURNING id`,
-      [name, slug, created_by]
+      `INSERT INTO "feature" (name, description, sprint, ticket, slug, created_by, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+      [name, description, sprint, ticket, slug, created_by, created_date]
     )
     .then((results) => {
       response.status(201).send(`Feature added with ID: ${results.rows[0].id}`);
@@ -69,15 +75,34 @@ const createFeature = (request, response, next) => {
 
 const updateFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
-  const { name, slug, last_modified_by } = request.body;
+  const {
+    name,
+    description,
+    sprint,
+    ticket,
+    slug,
+    last_modified_by,
+  } = request.body;
+
+  const modified_date = unixTimeStamp();
 
   pool
     .query(
-      `UPDATE "feature" SET name = $1, slug = $2, last_modified_by = $3 WHERE id = $4`,
-      [name, slug, last_modified_by, id]
+      `UPDATE "feature" SET name = $1, description = $2, sprint = $3, ticket = $4, slug = $5, last_modified_by = $6, modified_date = $7 WHERE id = $8`,
+      [
+        name,
+        description,
+        sprint,
+        ticket,
+        slug,
+        last_modified_by,
+        modified_date,
+        id,
+      ]
     )
     .then((results) => {
       response.status(200).send(`Feature modified with ID: ${id}`);
+      console.log(modified_date);
     })
     .catch((e) => {
       next(e);
