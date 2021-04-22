@@ -88,7 +88,7 @@ const updateFeature = (request, response, next) => {
 
   pool
     .query(
-      `UPDATE "feature" SET name = $1, description = $2, sprint = $3, ticket = $4, slug = $5, last_modified_by = $6, modified_date = $7 WHERE id = $8`,
+      `UPDATE "feature" SET name = $1, description = $2, sprint = $3, ticket = $4, slug = $5, last_modified_by = $6, modified_date = $7 WHERE id = $8 RETURNING *`,
       [
         name,
         description,
@@ -101,8 +101,7 @@ const updateFeature = (request, response, next) => {
       ]
     )
     .then((results) => {
-      response.status(200).send(`Feature modified with ID: ${id}`);
-      console.log(modified_date);
+      response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
       next(e);
