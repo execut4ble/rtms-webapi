@@ -9,6 +9,10 @@ const pool = new Pool({
   port: config.pgport,
 });
 
+function unixTimeStamp() {
+  return Math.floor(+new Date() / 1000);
+}
+
 const getExecutions = (request, response, next) => {
   pool
     .query(
@@ -36,7 +40,7 @@ const getExecutionInfo = (request, response, next) => {
       `SELECT run.*, created.username AS created_user, modified.username AS modified_user 
       FROM "run" 
       INNER JOIN "user" AS created ON created_by = created.id 
-      INNER JOIN "user" AS modified ON last_modified_by = modified.id
+      LEFT JOIN "user" AS modified ON last_modified_by = modified.id
       WHERE run.id = $1 
       ORDER BY run.id ASC`,
       [id]
@@ -50,17 +54,25 @@ const getExecutionInfo = (request, response, next) => {
 };
 
 const createExecution = (request, response, next) => {
-  const { name, slug, created_by } = request.body;
+  const { name, slug, is_active, feature, created_by } = request.body;
+
+  const created_date = unixTimeStamp();
 
   pool
     .query(
-      `INSERT INTO "run" (name, slug, created_by) VALUES ($1, $2, $3) RETURNING id`,
-      [name, slug, created_by]
+      `
+      WITH ins1 AS (
+        INSERT INTO "run" (name, slug, is_active, created_by, created_date) 
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id AS run_id
+        )
+		    INSERT INTO testcase_run (testcase_id, run_id, status)
+        SELECT id, (SELECT run_id FROM ins1), 'tbd' FROM "testcase" WHERE feature = $6 RETURNING *;
+      `,
+      [name, slug, is_active, created_by, created_date, feature]
     )
     .then((results) => {
-      response
-        .status(201)
-        .send(`Test execution added with ID: ${results.rows[0].id}`);
+      response.status(201).json(results.rows[0]);
     })
     .catch((e) => {
       if (e.code == "23505") {
@@ -92,7 +104,7 @@ const deleteExecution = (request, response, next) => {
   const id = parseInt(request.params.id);
 
   pool
-    .query(`DELETE FROM "run" WHERE id = $1`, [id])
+    .query(`DELETE FROM "run" WHERE id = $1;`, [id])
     .then((results) => {
       response.status(200).send(`Test execution deleted with ID: ${id}`);
     })

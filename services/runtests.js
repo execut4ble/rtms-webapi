@@ -32,24 +32,27 @@ const getRuntests = (request, response, next) => {
 
 const createRuntest = (request, response, next) => {
   // maybe use feature param here?
-  const id = parseInt(request.params.id);
-  const { scenario, description, created_by } = request.body;
+  const run_id = parseInt(request.params.id);
+  const { features } = request.body;
+  console.log(features[0]);
+  console.log(features[1]);
+  const inserts = `INSERT INTO testcase_run (testcase_id, run_id, status) SELECT id, ${run_id}, 'tbd' FROM "testcase" WHERE feature IN (${features[0]}, ${features[1]});`;
 
   pool
     .query(
-      `INSERT INTO "testcase" (feature, scenario, description, created_by) VALUES ($1, $2, $3, $4) RETURNING feature, id`,
-      [id, scenario, description, created_by]
+      `
+      BEGIN;
+      ${inserts}
+      COMMIT;
+      `,
+      []
     )
     .then((results) => {
-      response
-        .status(201)
-        .send(
-          `Test case in feature ${results.rows[0].feature} added with ID: ${results.rows[0].id}`
-        );
+      response.status(201).json(results);
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(new Error("An error occured. Test case already exists."));
+        next(new Error("An error occured. Test execution already exists."));
       } else {
         next(e);
       }

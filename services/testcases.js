@@ -18,6 +18,7 @@ const getTestcases = (request, response, next) => {
       FROM "testcase" 
 	  INNER JOIN "testcase_run" ON testcase.id = testcase_run.testcase_id
       WHERE feature = $1 
+      GROUP BY testcase.id, testcase_run.last_execution_date, testcase_run.status 
       ORDER BY testcase.id ASC`,
       [id]
     )
