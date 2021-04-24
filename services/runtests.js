@@ -33,19 +33,14 @@ const getRuntests = (request, response, next) => {
 const createRuntest = (request, response, next) => {
   // maybe use feature param here?
   const run_id = parseInt(request.params.id);
-  const { features } = request.body;
-  console.log(features[0]);
-  console.log(features[1]);
-  const inserts = `INSERT INTO testcase_run (testcase_id, run_id, status) SELECT id, ${run_id}, 'tbd' FROM "testcase" WHERE feature IN (${features[0]}, ${features[1]});`;
+  const { feature } = request.body;
 
   pool
     .query(
       `
-      BEGIN;
-      ${inserts}
-      COMMIT;
+      INSERT INTO testcase_run (testcase_id, run_id, status) SELECT id, '$1', 'tbd' FROM "testcase" WHERE feature = ANY ($2);
       `,
-      []
+      [run_id, feature]
     )
     .then((results) => {
       response.status(201).json(results);

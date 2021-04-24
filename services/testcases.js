@@ -12,11 +12,12 @@ const pool = new Pool({
 const getTestcases = (request, response, next) => {
   const id = parseInt(request.params.id);
 
+  // TODO: Fix duplicated testcases when it has two different statuses in multiple executions
   pool
     .query(
       `SELECT testcase.*, testcase_run.last_execution_date, testcase_run.status 
       FROM "testcase" 
-	  INNER JOIN "testcase_run" ON testcase.id = testcase_run.testcase_id
+	    INNER JOIN "testcase_run" ON testcase.id = testcase_run.testcase_id
       WHERE feature = $1 
       GROUP BY testcase.id, testcase_run.last_execution_date, testcase_run.status 
       ORDER BY testcase.id ASC`,

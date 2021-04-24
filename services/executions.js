@@ -67,7 +67,7 @@ const createExecution = (request, response, next) => {
         RETURNING id AS run_id
         ), testcases AS (
           INSERT INTO testcase_run (testcase_id, run_id, status)
-          SELECT id, (SELECT run_id FROM ins1), 'tbd' FROM "testcase" WHERE feature = $6 RETURNING *
+          SELECT id, (SELECT run_id FROM ins1), 'tbd' FROM "testcase" WHERE feature = ANY ($6) RETURNING *
           )
 		    SELECT (SELECT run_id FROM ins1) AS id, count(*) AS testcase_count FROM testcases;
       `,
@@ -89,10 +89,12 @@ const updateExecution = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { name, slug, is_active, last_modified_by } = request.body;
 
+  const modified_date = unixTimeStamp();
+
   pool
     .query(
-      `UPDATE "run" SET name = $1, slug = $2, is_active = $3, last_modified_by = $4 WHERE id = $5`,
-      [name, slug, is_active, last_modified_by, id]
+      `UPDATE "run" SET name = $1, slug = $2, is_active = $3, last_modified_by = $4, modified_date = $5 WHERE id = $6 RETURNING *`,
+      [name, slug, is_active, last_modified_by, modified_date, id]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
