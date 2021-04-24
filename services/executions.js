@@ -65,9 +65,11 @@ const createExecution = (request, response, next) => {
         INSERT INTO "run" (name, slug, is_active, created_by, created_date) 
         VALUES ($1, $2, $3, $4, $5)
         RETURNING id AS run_id
-        )
-		    INSERT INTO testcase_run (testcase_id, run_id, status)
-        SELECT id, (SELECT run_id FROM ins1), 'tbd' FROM "testcase" WHERE feature = $6 RETURNING *;
+        ), testcases AS (
+          INSERT INTO testcase_run (testcase_id, run_id, status)
+          SELECT id, (SELECT run_id FROM ins1), 'tbd' FROM "testcase" WHERE feature = $6 RETURNING *
+          )
+		    SELECT (SELECT run_id FROM ins1) AS id, count(*) AS testcase_count FROM testcases;
       `,
       [name, slug, is_active, created_by, created_date, feature]
     )
