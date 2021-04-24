@@ -87,15 +87,15 @@ const createExecution = (request, response, next) => {
 
 const updateExecution = (request, response, next) => {
   const id = parseInt(request.params.id);
-  const { name, slug, last_modified_by } = request.body;
+  const { name, slug, is_active, last_modified_by } = request.body;
 
   pool
     .query(
-      `UPDATE "run" SET name = $1, slug = $2, last_modified_by = $3 WHERE id = $4`,
-      [name, slug, last_modified_by, id]
+      `UPDATE "run" SET name = $1, slug = $2, is_active = $3, last_modified_by = $4 WHERE id = $5`,
+      [name, slug, is_active, last_modified_by, id]
     )
     .then((results) => {
-      response.status(200).send(`Test execution modified with ID: ${id}`);
+      response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
       next(e);
