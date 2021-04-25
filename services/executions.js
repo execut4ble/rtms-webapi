@@ -32,6 +32,26 @@ const getExecutions = (request, response, next) => {
     });
 };
 
+const getActiveExecutions = (request, response, next) => {
+  pool
+    .query(
+      `SELECT *, 
+      (SELECT COUNT(*) FROM testcase_RUN WHERE run_id = id) AS testcase_count,
+      (SELECT COUNT(status) FROM testcase_run WHERE status = 'passed' AND run_id = id) AS passed, 
+      (SELECT COUNT(status) FROM testcase_run WHERE status = 'failed' AND run_id = id) AS failed,
+      (SELECT COUNT(status) FROM testcase_run WHERE status = 'tbd' AND run_id = id) AS tbd
+      FROM run
+      WHERE is_active = true
+      ORDER BY id ASC`
+    )
+    .then((results) => {
+      response.status(200).json(results.rows);
+    })
+    .catch((e) => {
+      next(e);
+    });
+};
+
 const getExecutionInfo = (request, response, next) => {
   const id = parseInt(request.params.id);
 
@@ -119,6 +139,7 @@ const deleteExecution = (request, response, next) => {
 
 module.exports = {
   getExecutions,
+  getActiveExecutions,
   getExecutionInfo,
   createExecution,
   updateExecution,
