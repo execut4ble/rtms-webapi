@@ -9,6 +9,10 @@ const pool = new Pool({
   port: config.pgport,
 });
 
+function unixTimeStamp() {
+  return Math.floor(+new Date() / 1000);
+}
+
 const getTestcases = (request, response, next) => {
   const id = parseInt(request.params.id);
 
@@ -17,7 +21,7 @@ const getTestcases = (request, response, next) => {
     .query(
       `SELECT testcase.*, MAX(CASE WHEN status != 'tbd' THEN last_execution_date ELSE NULL END) AS last_execution_date
       FROM "testcase" 
-        INNER JOIN (SELECT testcase_id, last_execution_date, status, run_id, last_executed_by FROM "testcase_run") AS t1 ON testcase.id = testcase_id
+        LEFT JOIN (SELECT testcase_id, last_execution_date, status, run_id, last_executed_by FROM "testcase_run") AS t1 ON testcase.id = testcase_id
       WHERE feature = $1
       GROUP BY id
       ORDER BY testcase.id ASC;`,
@@ -32,21 +36,18 @@ const getTestcases = (request, response, next) => {
 };
 
 const createTestcase = (request, response, next) => {
-  // maybe use feature param here?
-  const id = parseInt(request.params.id);
+  const featureID = parseInt(request.params.feature);
   const { scenario, description, created_by } = request.body;
+
+  const created_date = unixTimeStamp();
 
   pool
     .query(
-      `INSERT INTO "testcase" (feature, scenario, description, created_by) VALUES ($1, $2, $3, $4) RETURNING feature, id`,
-      [id, scenario, description, created_by]
+      `INSERT INTO "testcase" (feature, scenario, description, created_by, created_date) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [featureID, scenario, description, created_by, created_date]
     )
     .then((results) => {
-      response
-        .status(201)
-        .send(
-          `Test case in feature ${results.rows[0].feature} added with ID: ${results.rows[0].id}`
-        );
+      response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
       if (e.code == "23505") {
@@ -62,15 +63,15 @@ const updateTestcase = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { scenario, description, last_modified_by } = request.body;
 
+  const modified_date = unixTimeStamp();
+
   pool
     .query(
-      `UPDATE "testcase" SET scenario = $1, description = $2, last_modified_by = $3 WHERE feature = $4 AND id = $5`,
-      [scenario, description, last_modified_by, feature, id]
+      `UPDATE "testcase" SET scenario = $1, description = $2, last_modified_by = $3, modified_date = $4 WHERE feature = $5 AND id = $6 RETURNING *`,
+      [scenario, description, last_modified_by, modified_date, feature, id]
     )
     .then((results) => {
-      response
-        .status(200)
-        .send(`Test case ID ${id} of feature ID ${feature} modified`);
+      response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
       next(e);

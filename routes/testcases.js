@@ -4,7 +4,7 @@ const router = express.Router();
 
 // Test cases
 router.get("/:id", db.getTestcases);
-router.post("/:id/", db.createTestcase);
+router.post("/:feature/", db.createTestcase);
 router.put("/:feature/:id", db.updateTestcase);
 router.delete("/:feature/:id", db.deleteTestcase);
 

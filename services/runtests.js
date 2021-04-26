@@ -14,7 +14,7 @@ const getRuntests = (request, response, next) => {
 
   pool
     .query(
-      `SELECT testcase_id, feature.name AS feature_name, scenario, status, feature
+      `SELECT testcase_id, feature.name AS feature_name, scenario, status, feature, last_execution_date
       FROM testcase
 	  INNER JOIN "testcase_run" ON testcase_run.testcase_id = id
 	  INNER JOIN "feature" ON feature.id = feature
