@@ -9,6 +9,10 @@ const pool = new Pool({
   port: config.pgport,
 });
 
+function unixTimeStamp() {
+  return Math.floor(+new Date() / 1000);
+}
+
 const getRuntests = (request, response, next) => {
   const id = parseInt(request.params.id);
 
@@ -55,19 +59,19 @@ const createRuntest = (request, response, next) => {
 };
 
 const updateRuntest = (request, response, next) => {
-  const feature = parseInt(request.params.feature);
-  const id = parseInt(request.params.id);
-  const { scenario, description, last_modified_by } = request.body;
+  const run_id = parseInt(request.params.run);
+  const testcase_id = parseInt(request.params.testcase);
+  const { status, last_executed_by } = request.body;
+
+  const last_execution_date = unixTimeStamp();
 
   pool
     .query(
-      `UPDATE "testcase" SET scenario = $1, description = $2, last_modified_by = $3 WHERE feature = $4 AND id = $5`,
-      [scenario, description, last_modified_by, feature, id]
+      `UPDATE "testcase_run" SET status = $1, last_executed_by = $2, last_execution_date = $3 WHERE testcase_id = $4 AND run_id = $5 RETURNING *`,
+      [status, last_executed_by, last_execution_date, testcase_id, run_id]
     )
     .then((results) => {
-      response
-        .status(200)
-        .send(`Test case ID ${id} of feature ID ${feature} modified`);
+      response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
       next(e);
