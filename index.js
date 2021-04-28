@@ -2,6 +2,8 @@ const express = require("express");
 const config = require("./config.json");
 const cors = require("cors");
 const logger = require("morgan");
+const session = require("express-session");
+const jwt = require("jsonwebtoken");
 
 const app = express();
 
@@ -38,6 +40,10 @@ app.use((error, request, response, next) => {
   } else {
     response.status(500).json({ status: 500, error: error.stack });
   }
+});
+
+app.use("/login", (req, res) => {
+  res.send({ token: "test123" });
 });
 
 app.listen(config.port, () => {
