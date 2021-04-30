@@ -40,7 +40,6 @@ const createUser = async (request, response, next) => {
     });
 
   const hashPass = await bcrypt.hash(password, 12);
-  console.log(hashPass);
 
   pool
     .query(
@@ -60,18 +59,31 @@ const createUser = async (request, response, next) => {
 };
 
 // TODO: Only allow authorized user to perform this action
-const updateUser = (request, response, next) => {
-  const id = parseInt(request.params.id);
-  const { email, username } = request.body;
+const updateUser = async (request, response, next) => {
+  if (
+    !request.headers.authorization ||
+    !request.headers.authorization.startsWith("Bearer") ||
+    !request.headers.authorization.split(" ")[1]
+  ) {
+    return response.status(422).json({
+      message: "Please provide the token",
+    });
+  }
+
+  const token = request.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, config.jwtsecret);
+
+  const { email, username, password } = request.body;
+
+  const hashPass = await bcrypt.hash(password, 12);
 
   pool
-    .query(`UPDATE "user" SET email = $1, username = $2 WHERE id = $3`, [
-      email,
-      username,
-      id,
-    ])
+    .query(
+      `UPDATE "user" SET email = $1, username = $2, password = $3 WHERE id = $4`,
+      [email, username, hashPass, decoded.id]
+    )
     .then((results) => {
-      response.status(200).send(`User modified with ID: ${id}`);
+      response.status(200).send(`User modified with ID: ${decoded.id}`);
     })
     .catch((e) => {
       next(e);
@@ -111,7 +123,7 @@ const loginUser = (request, response, next) => {
           message: "Incorrect password",
         });
       }
-      const token = jwt.sign({ id: results.rows[0].id }, "dolbaeb", {
+      const token = jwt.sign({ id: results.rows[0].id }, config.jwtsecret, {
         expiresIn: "1h",
       });
       return response.json({
@@ -135,7 +147,7 @@ const getUser = (request, response, next) => {
   }
 
   const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, "dolbaeb");
+  const decoded = jwt.verify(token, config.jwtsecret);
 
   pool
     .query(`SELECT * FROM "user" WHERE id = $1`, [decoded.id])
