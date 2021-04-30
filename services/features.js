@@ -1,4 +1,5 @@
 const config = require("../config.json");
+const jwt = require("jsonwebtoken");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -13,6 +14,7 @@ function unixTimeStamp() {
   return Math.floor(+new Date() / 1000);
 }
 
+// TODO: Add authorization
 const getFeatures = (request, response, next) => {
   pool
     .query(
@@ -30,6 +32,7 @@ const getFeatures = (request, response, next) => {
     });
 };
 
+// TODO: Add authorization
 const getFeatureInfo = (request, response, next) => {
   const id = parseInt(request.params.id);
 
@@ -52,14 +55,27 @@ const getFeatureInfo = (request, response, next) => {
 };
 
 const createFeature = (request, response, next) => {
-  const { name, description, sprint, ticket, slug, created_by } = request.body;
+  const { name, description, sprint, ticket, slug } = request.body;
+
+  if (
+    !request.headers.authorization ||
+    !request.headers.authorization.startsWith("Bearer") ||
+    !request.headers.authorization.split(" ")[1]
+  ) {
+    return response.status(422).json({
+      message: "Please provide the token",
+    });
+  }
+
+  const token = request.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, config.jwtsecret);
 
   const created_date = unixTimeStamp();
 
   pool
     .query(
       `INSERT INTO "feature" (name, description, sprint, ticket, slug, created_by, created_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, description, sprint, ticket, slug, created_by, created_date]
+      [name, description, sprint, ticket, slug, decoded.id, created_date]
     )
     .then((results) => {
       response.status(201).json(results.rows[0]);
@@ -75,30 +91,27 @@ const createFeature = (request, response, next) => {
 
 const updateFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
-  const {
-    name,
-    description,
-    sprint,
-    ticket,
-    slug,
-    last_modified_by,
-  } = request.body;
+  const { name, description, sprint, ticket, slug } = request.body;
+
+  if (
+    !request.headers.authorization ||
+    !request.headers.authorization.startsWith("Bearer") ||
+    !request.headers.authorization.split(" ")[1]
+  ) {
+    return response.status(422).json({
+      message: "Please provide the token",
+    });
+  }
+
+  const token = request.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, config.jwtsecret);
 
   const modified_date = unixTimeStamp();
 
   pool
     .query(
       `UPDATE "feature" SET name = $1, description = $2, sprint = $3, ticket = $4, slug = $5, last_modified_by = $6, modified_date = $7 WHERE id = $8 RETURNING *`,
-      [
-        name,
-        description,
-        sprint,
-        ticket,
-        slug,
-        last_modified_by,
-        modified_date,
-        id,
-      ]
+      [name, description, sprint, ticket, slug, decoded.id, modified_date, id]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
@@ -108,6 +121,7 @@ const updateFeature = (request, response, next) => {
     });
 };
 
+// TODO: Add authorization
 const deleteFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
 

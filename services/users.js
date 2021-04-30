@@ -58,7 +58,6 @@ const createUser = async (request, response, next) => {
     });
 };
 
-// TODO: Only allow authorized user to perform this action
 const updateUser = async (request, response, next) => {
   if (
     !request.headers.authorization ||

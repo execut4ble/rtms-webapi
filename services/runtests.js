@@ -1,4 +1,5 @@
 const config = require("../config.json");
+const jwt = require("jsonwebtoken");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -13,6 +14,7 @@ function unixTimeStamp() {
   return Math.floor(+new Date() / 1000);
 }
 
+// TODO: Add authorization
 const getRuntests = (request, response, next) => {
   const id = parseInt(request.params.id);
 
@@ -34,6 +36,7 @@ const getRuntests = (request, response, next) => {
     });
 };
 
+// TODO: Add authorization
 const createRuntest = (request, response, next) => {
   // maybe use feature param here?
   const run_id = parseInt(request.params.id);
@@ -61,14 +64,27 @@ const createRuntest = (request, response, next) => {
 const updateRuntest = (request, response, next) => {
   const run_id = parseInt(request.params.run);
   const testcase_id = parseInt(request.params.testcase);
-  const { status, last_executed_by } = request.body;
+  const { status } = request.body;
+
+  if (
+    !request.headers.authorization ||
+    !request.headers.authorization.startsWith("Bearer") ||
+    !request.headers.authorization.split(" ")[1]
+  ) {
+    return response.status(422).json({
+      message: "Please provide the token",
+    });
+  }
+
+  const token = request.headers.authorization.split(" ")[1];
+  const decoded = jwt.verify(token, config.jwtsecret);
 
   const last_execution_date = unixTimeStamp();
 
   pool
     .query(
       `UPDATE "testcase_run" SET status = $1, last_executed_by = $2, last_execution_date = $3 WHERE testcase_id = $4 AND run_id = $5 RETURNING *`,
-      [status, last_executed_by, last_execution_date, testcase_id, run_id]
+      [status, decoded.id, last_execution_date, testcase_id, run_id]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
@@ -78,6 +94,7 @@ const updateRuntest = (request, response, next) => {
     });
 };
 
+// TODO: Add authorization
 const deleteRuntest = (request, response, next) => {
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
