@@ -1,6 +1,7 @@
 const config = require("../config.json");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const auth = require("../utils/authorizeRequest");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -13,6 +14,7 @@ const pool = new Pool({
 
 // TODO: Only allow authorized user to perform this action
 const getUsers = (request, response, next) => {
+  auth.authorizeRequest(request);
   pool
     .query(`SELECT * FROM "user" ORDER BY id ASC`)
     .then((results) => {
@@ -59,38 +61,25 @@ const createUser = async (request, response, next) => {
 };
 
 const updateUser = async (request, response, next) => {
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
-
+  const user = auth.authorizeRequest(request);
   const { email, username, password } = request.body;
-
   const hashPass = await bcrypt.hash(password, 12);
 
   pool
     .query(
       `UPDATE "user" SET email = $1, username = $2, password = $3 WHERE id = $4`,
-      [email, username, hashPass, decoded.id]
+      [email, username, hashPass, user.id]
     )
     .then((results) => {
-      response.status(200).send(`User modified with ID: ${decoded.id}`);
+      response.status(200).send(`User modified with ID: ${user.id}`);
     })
     .catch((e) => {
       next(e);
     });
 };
 
-// TODO: Only allow authorized user to perform this action
 const deleteUser = (request, response, next) => {
+  auth.authorizeRequest(request);
   const id = parseInt(request.params.id);
 
   pool
@@ -135,21 +124,10 @@ const loginUser = (request, response, next) => {
 };
 
 const getUser = (request, response, next) => {
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
+  const user = auth.authorizeRequest(request);
 
   pool
-    .query(`SELECT * FROM "user" WHERE id = $1`, [decoded.id])
+    .query(`SELECT * FROM "user" WHERE id = $1`, [user.id])
     .then((results) => {
       if (results.rows.length > 0) {
         response.status(200).json(results.rows[0]);

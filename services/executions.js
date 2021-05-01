@@ -1,5 +1,5 @@
 const config = require("../config.json");
-const jwt = require("jsonwebtoken");
+const auth = require("../utils/authorizeRequest");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -14,8 +14,8 @@ function unixTimeStamp() {
   return Math.floor(+new Date() / 1000);
 }
 
-// TODO: Add authorization
 const getExecutions = (request, response, next) => {
+  auth.authorizeRequest(request);
   pool
     .query(
       `SELECT *, 
@@ -34,8 +34,8 @@ const getExecutions = (request, response, next) => {
     });
 };
 
-// TODO: Add authorization
 const getActiveExecutions = (request, response, next) => {
+  auth.authorizeRequest(request);
   pool
     .query(
       `SELECT *, 
@@ -55,8 +55,8 @@ const getActiveExecutions = (request, response, next) => {
     });
 };
 
-// TODO: Add authorization
 const getExecutionInfo = (request, response, next) => {
+  auth.authorizeRequest(request);
   const id = parseInt(request.params.id);
 
   pool
@@ -79,20 +79,7 @@ const getExecutionInfo = (request, response, next) => {
 
 const createExecution = (request, response, next) => {
   const { name, slug, is_active, feature } = request.body;
-
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
-
+  const user = auth.authorizeRequest(request);
   const created_date = unixTimeStamp();
 
   pool
@@ -108,7 +95,7 @@ const createExecution = (request, response, next) => {
           )
 		    SELECT (SELECT run_id FROM ins1) AS id, count(*) AS testcase_count FROM testcases;
       `,
-      [name, slug, is_active, decoded.id, created_date, feature]
+      [name, slug, is_active, user.id, created_date, feature]
     )
     .then((results) => {
       response.status(201).json(results.rows[0]);
@@ -125,26 +112,13 @@ const createExecution = (request, response, next) => {
 const updateExecution = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { name, slug, is_active } = request.body;
-
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
-
+  const user = auth.authorizeRequest(request);
   const modified_date = unixTimeStamp();
 
   pool
     .query(
       `UPDATE "run" SET name = $1, slug = $2, is_active = $3, last_modified_by = $4, modified_date = $5 WHERE id = $6 RETURNING *`,
-      [name, slug, is_active, decoded.id, modified_date, id]
+      [name, slug, is_active, user.id, modified_date, id]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
@@ -154,8 +128,8 @@ const updateExecution = (request, response, next) => {
     });
 };
 
-// TODO: Add authorization
 const deleteExecution = (request, response, next) => {
+  auth.authorizeRequest(request);
   const id = parseInt(request.params.id);
 
   pool

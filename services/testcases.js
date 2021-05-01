@@ -1,5 +1,5 @@
 const config = require("../config.json");
-const jwt = require("jsonwebtoken");
+const auth = require("../utils/authorizeRequest");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -14,8 +14,8 @@ function unixTimeStamp() {
   return Math.floor(+new Date() / 1000);
 }
 
-// TODO: Add authorization
 const getTestcases = (request, response, next) => {
+  auth.authorizeRequest(request);
   const id = parseInt(request.params.id);
 
   // TODO: Add last status
@@ -40,26 +40,13 @@ const getTestcases = (request, response, next) => {
 const createTestcase = (request, response, next) => {
   const featureID = parseInt(request.params.feature);
   const { scenario, description } = request.body;
-
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
-
+  const user = auth.authorizeRequest(request);
   const created_date = unixTimeStamp();
 
   pool
     .query(
       `INSERT INTO "testcase" (feature, scenario, description, created_by, created_date) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [featureID, scenario, description, decoded.id, created_date]
+      [featureID, scenario, description, user.id, created_date]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
@@ -77,26 +64,13 @@ const updateTestcase = (request, response, next) => {
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
   const { scenario, description } = request.body;
-
-  if (
-    !request.headers.authorization ||
-    !request.headers.authorization.startsWith("Bearer") ||
-    !request.headers.authorization.split(" ")[1]
-  ) {
-    return response.status(422).json({
-      message: "Please provide the token",
-    });
-  }
-
-  const token = request.headers.authorization.split(" ")[1];
-  const decoded = jwt.verify(token, config.jwtsecret);
-
+  const user = auth.authorizeRequest(request);
   const modified_date = unixTimeStamp();
 
   pool
     .query(
       `UPDATE "testcase" SET scenario = $1, description = $2, last_modified_by = $3, modified_date = $4 WHERE feature = $5 AND id = $6 RETURNING *`,
-      [scenario, description, decoded.id, modified_date, feature, id]
+      [scenario, description, user.id, modified_date, feature, id]
     )
     .then((results) => {
       response.status(200).json(results.rows[0]);
@@ -106,10 +80,10 @@ const updateTestcase = (request, response, next) => {
     });
 };
 
-// TODO: Add authorization
 const deleteTestcase = (request, response, next) => {
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
+  auth.authorizeRequest(request);
 
   pool
     .query(`DELETE FROM "testcase" WHERE feature = $1 AND id = $2`, [
