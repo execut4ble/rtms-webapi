@@ -14,7 +14,7 @@ const pool = new Pool({
 
 // TODO: Only allow authorized user to perform this action
 const getUsers = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   pool
     .query(`SELECT * FROM "user" ORDER BY id ASC`)
     .then((results) => {
@@ -61,7 +61,7 @@ const createUser = async (request, response, next) => {
 };
 
 const updateUser = async (request, response, next) => {
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const { email, username, password } = request.body;
   const hashPass = await bcrypt.hash(password, 12);
 
@@ -79,7 +79,7 @@ const updateUser = async (request, response, next) => {
 };
 
 const deleteUser = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool
@@ -124,7 +124,7 @@ const loginUser = (request, response, next) => {
 };
 
 const getUser = (request, response, next) => {
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
 
   pool
     .query(`SELECT * FROM "user" WHERE id = $1`, [user.id])

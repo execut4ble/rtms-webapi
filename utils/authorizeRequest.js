@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const config = require("../config.json");
 
-function authorizeRequest(request) {
+function authorizeRequest(request, response, next) {
   if (
     !request.headers.authorization ||
     !request.headers.authorization.startsWith("Bearer") ||
@@ -9,6 +9,12 @@ function authorizeRequest(request) {
   ) {
     return response.status(422).json({
       message: "Please provide the token",
+    });
+  }
+
+  if (request.headers.authorization.split(" ")[1] === "undefined") {
+    return response.status(403).json({
+      message: "Unauthorized",
     });
   }
 

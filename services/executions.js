@@ -15,7 +15,7 @@ function unixTimeStamp() {
 }
 
 const getExecutions = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   pool
     .query(
       `SELECT *, 
@@ -35,7 +35,7 @@ const getExecutions = (request, response, next) => {
 };
 
 const getActiveExecutions = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   pool
     .query(
       `SELECT *, 
@@ -56,7 +56,7 @@ const getActiveExecutions = (request, response, next) => {
 };
 
 const getExecutionInfo = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool
@@ -79,7 +79,7 @@ const getExecutionInfo = (request, response, next) => {
 
 const createExecution = (request, response, next) => {
   const { name, slug, is_active, feature } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const created_date = unixTimeStamp();
 
   pool
@@ -112,7 +112,7 @@ const createExecution = (request, response, next) => {
 const updateExecution = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { name, slug, is_active } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const modified_date = unixTimeStamp();
 
   pool
@@ -129,7 +129,7 @@ const updateExecution = (request, response, next) => {
 };
 
 const deleteExecution = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool

@@ -15,7 +15,7 @@ function unixTimeStamp() {
 }
 
 const getTestcases = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   // TODO: Add last status
@@ -40,7 +40,7 @@ const getTestcases = (request, response, next) => {
 const createTestcase = (request, response, next) => {
   const featureID = parseInt(request.params.feature);
   const { scenario, description } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const created_date = unixTimeStamp();
 
   pool
@@ -64,7 +64,7 @@ const updateTestcase = (request, response, next) => {
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
   const { scenario, description } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const modified_date = unixTimeStamp();
 
   pool
@@ -83,7 +83,7 @@ const updateTestcase = (request, response, next) => {
 const deleteTestcase = (request, response, next) => {
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
 
   pool
     .query(`DELETE FROM "testcase" WHERE feature = $1 AND id = $2`, [

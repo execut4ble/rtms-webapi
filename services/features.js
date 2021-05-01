@@ -15,7 +15,7 @@ function unixTimeStamp() {
 }
 
 const getFeatures = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   pool
     .query(
       `SELECT *, (SELECT COUNT(*) 
@@ -33,7 +33,7 @@ const getFeatures = (request, response, next) => {
 };
 
 const getFeatureInfo = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool
@@ -56,7 +56,7 @@ const getFeatureInfo = (request, response, next) => {
 
 const createFeature = (request, response, next) => {
   const { name, description, sprint, ticket, slug } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const created_date = unixTimeStamp();
 
   pool
@@ -79,7 +79,7 @@ const createFeature = (request, response, next) => {
 const updateFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { name, description, sprint, ticket, slug } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const modified_date = unixTimeStamp();
 
   pool
@@ -97,7 +97,7 @@ const updateFeature = (request, response, next) => {
 
 const deleteFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
 
   pool
     .query(`DELETE FROM "feature" WHERE id = $1`, [id])

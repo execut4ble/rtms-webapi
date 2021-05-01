@@ -15,7 +15,7 @@ function unixTimeStamp() {
 }
 
 const getRuntests = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool
@@ -38,7 +38,7 @@ const getRuntests = (request, response, next) => {
 
 // Unused
 const createRuntest = (request, response, next) => {
-  auth.authorizeRequest(request); // authorize anyway
+  auth.authorizeRequest(request, response, next); // authorize anyway
   // maybe use feature param here?
   const run_id = parseInt(request.params.id);
   const { feature } = request.body;
@@ -66,7 +66,7 @@ const updateRuntest = (request, response, next) => {
   const run_id = parseInt(request.params.run);
   const testcase_id = parseInt(request.params.testcase);
   const { status } = request.body;
-  const user = auth.authorizeRequest(request);
+  const user = auth.authorizeRequest(request, response, next);
   const last_execution_date = unixTimeStamp();
 
   pool
@@ -83,7 +83,7 @@ const updateRuntest = (request, response, next) => {
 };
 
 const deleteRuntest = (request, response, next) => {
-  auth.authorizeRequest(request);
+  auth.authorizeRequest(request, response, next);
   const feature = parseInt(request.params.feature);
   const id = parseInt(request.params.id);
 
