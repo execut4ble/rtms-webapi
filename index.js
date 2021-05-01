@@ -12,6 +12,7 @@ var featuresRouter = require("./routes/features");
 var testcasesRouter = require("./routes/testcases");
 var executionsRouter = require("./routes/executions");
 var executionTestsRouter = require("./routes/runtests");
+var defectsRouter = require("./routes/defects");
 
 app.use(logger("dev"));
 app.use(cors());
@@ -31,6 +32,7 @@ app.use("/features", featuresRouter);
 app.use("/testcases", testcasesRouter);
 app.use("/runs", executionsRouter);
 app.use("/runtests", executionTestsRouter);
+app.use("/defects", defectsRouter);
 app.use((error, request, response, next) => {
   console.log(error.stack);
   if (isProduction) {
