@@ -20,7 +20,43 @@ const getDefects = (request, response, next) => {
     .query(
       `SELECT defect.*, feature.name AS feature_name
       FROM "defect"
-	  INNER JOIN "feature" ON feature.id = feature 
+      INNER JOIN "feature" ON feature.id = feature 
+      ORDER BY id ASC`
+    )
+    .then((results) => {
+      response.status(200).json(results.rows);
+    })
+    .catch((e) => {
+      next(e);
+    });
+};
+
+const getOpenDefects = (request, response, next) => {
+  auth.authorizeRequest(request, response, next);
+  pool
+    .query(
+      `SELECT defect.*, feature.name AS feature_name
+      FROM "defect"
+      INNER JOIN "feature" ON feature.id = feature
+      WHERE is_active = true 
+      ORDER BY id ASC`
+    )
+    .then((results) => {
+      response.status(200).json(results.rows);
+    })
+    .catch((e) => {
+      next(e);
+    });
+};
+
+const getClosedDefects = (request, response, next) => {
+  auth.authorizeRequest(request, response, next);
+  pool
+    .query(
+      `SELECT defect.*, feature.name AS feature_name
+      FROM "defect"
+      INNER JOIN "feature" ON feature.id = feature
+      WHERE is_active = false 
       ORDER BY id ASC`
     )
     .then((results) => {
@@ -152,6 +188,8 @@ const deleteDefect = (request, response, next) => {
 
 module.exports = {
   getDefects,
+  getOpenDefects,
+  getClosedDefects,
   getDefectInfo,
   createDefect,
   updateDefect,

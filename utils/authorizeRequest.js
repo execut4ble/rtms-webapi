@@ -12,12 +12,6 @@ function authorizeRequest(request, response, next) {
     });
   }
 
-  if (request.headers.authorization.split(" ")[1] === "undefined") {
-    return response.status(403).json({
-      message: "Unauthorized",
-    });
-  }
-
   const token = request.headers.authorization.split(" ")[1];
   const user = jwt.verify(token, config.jwtsecret);
 

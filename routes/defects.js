@@ -4,6 +4,8 @@ const router = express.Router();
 
 // Defects
 router.get("/", db.getDefects);
+router.get("/open", db.getOpenDefects);
+router.get("/closed", db.getClosedDefects);
 router.get("/:id", db.getDefectInfo);
 router.post("/", db.createDefect);
 router.put("/:id", db.updateDefect);

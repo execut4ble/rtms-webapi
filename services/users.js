@@ -112,7 +112,7 @@ const loginUser = (request, response, next) => {
         });
       }
       const token = jwt.sign({ id: results.rows[0].id }, config.jwtsecret, {
-        expiresIn: "1h",
+        expiresIn: "4h",
       });
       return response.json({
         token: token,
