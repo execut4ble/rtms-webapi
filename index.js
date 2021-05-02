@@ -13,6 +13,7 @@ var testcasesRouter = require("./routes/testcases");
 var executionsRouter = require("./routes/executions");
 var executionTestsRouter = require("./routes/runtests");
 var defectsRouter = require("./routes/defects");
+var watchedRouter = require("./routes/watchedRuns");
 
 app.use(logger("dev"));
 app.use(cors());
@@ -33,6 +34,7 @@ app.use("/testcases", testcasesRouter);
 app.use("/runs", executionsRouter);
 app.use("/runtests", executionTestsRouter);
 app.use("/defects", defectsRouter);
+app.use("/watched", watchedRouter);
 app.use((error, request, response, next) => {
   console.log(error.stack);
   if (isProduction) {

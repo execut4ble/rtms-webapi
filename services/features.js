@@ -19,10 +19,11 @@ const getFeatures = (request, response, next) => {
   pool
     .query(
       `SELECT *, (SELECT COUNT(*) 
-        FROM "testcase" 
-        WHERE testcase.feature = feature.id) AS testcases 
-      FROM "feature" 
-      ORDER BY id ASC`
+      FROM "testcase" 
+      WHERE testcase.feature = feature.id) AS testcases,
+      (SELECT COUNT(*) FROM defect WHERE defect.feature = feature.id AND defect.is_active = true) AS defects 
+    FROM "feature" 
+    ORDER BY id ASC`
     )
     .then((results) => {
       response.status(200).json(results.rows);
