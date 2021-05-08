@@ -1,0 +1,9 @@
+{
+    "port": applicationPort,
+    "pghost": host,
+    "pguser": user,
+    "pgdatabase": database,
+    "pgpassword": password,
+    "pgport": databasePort,
+    "jwtsecret": JWTsecret
+}
