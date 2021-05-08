@@ -1,5 +1,6 @@
 const config = require("../config.json");
 const auth = require("../utils/authorizeRequest");
+const timestamp = require("../utils/unixTimeStamp");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -9,10 +10,6 @@ const pool = new Pool({
   password: config.pgpassword,
   port: config.pgport,
 });
-
-function unixTimeStamp() {
-  return Math.floor(+new Date() / 1000);
-}
 
 const getRuntests = (request, response, next) => {
   auth.authorizeRequest(request, response, next);
@@ -67,7 +64,7 @@ const updateRuntest = (request, response, next) => {
   const testcase_id = parseInt(request.params.testcase);
   const { status } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const last_execution_date = unixTimeStamp();
+  const last_execution_date = timestamp.unixTimeStamp();
 
   pool
     .query(

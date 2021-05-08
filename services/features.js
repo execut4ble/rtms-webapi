@@ -1,5 +1,6 @@
 const config = require("../config.json");
 const auth = require("../utils/authorizeRequest");
+const timestamp = require("../utils/unixTimeStamp");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -9,10 +10,6 @@ const pool = new Pool({
   password: config.pgpassword,
   port: config.pgport,
 });
-
-function unixTimeStamp() {
-  return Math.floor(+new Date() / 1000);
-}
 
 const getFeatures = (request, response, next) => {
   auth.authorizeRequest(request, response, next);
@@ -58,7 +55,7 @@ const getFeatureInfo = (request, response, next) => {
 const createFeature = (request, response, next) => {
   const { name, description, sprint, ticket, slug } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const created_date = unixTimeStamp();
+  const created_date = timestamp.unixTimeStamp();
 
   pool
     .query(
@@ -81,7 +78,7 @@ const updateFeature = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { name, description, sprint, ticket, slug } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const modified_date = unixTimeStamp();
+  const modified_date = timestamp.unixTimeStamp();
 
   pool
     .query(

@@ -1,5 +1,6 @@
 const config = require("../config.json");
 const auth = require("../utils/authorizeRequest");
+const timestamp = require("../utils/unixTimeStamp");
 
 const Pool = require("pg").Pool;
 const pool = new Pool({
@@ -9,10 +10,6 @@ const pool = new Pool({
   password: config.pgpassword,
   port: config.pgport,
 });
-
-function unixTimeStamp() {
-  return Math.floor(+new Date() / 1000);
-}
 
 const getDefects = (request, response, next) => {
   auth.authorizeRequest(request, response, next);
@@ -99,7 +96,7 @@ const createDefect = (request, response, next) => {
     is_active,
   } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const created_date = unixTimeStamp();
+  const created_date = timestamp.unixTimeStamp();
 
   pool
     .query(
@@ -129,16 +126,9 @@ const createDefect = (request, response, next) => {
 
 const updateDefect = (request, response, next) => {
   const id = parseInt(request.params.id);
-  const {
-    feature,
-    name,
-    description,
-    priority,
-    ticket,
-    is_active,
-  } = request.body;
+  const { feature, name, description, priority, ticket } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const modified_date = unixTimeStamp();
+  const modified_date = timestamp.unixTimeStamp();
 
   pool
     .query(
@@ -157,7 +147,7 @@ const updateDefectState = (request, response, next) => {
   const id = parseInt(request.params.id);
   const { is_active } = request.body;
   const user = auth.authorizeRequest(request, response, next);
-  const modified_date = unixTimeStamp();
+  const modified_date = timestamp.unixTimeStamp();
 
   pool
     .query(
