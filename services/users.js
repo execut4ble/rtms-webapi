@@ -99,7 +99,7 @@ const loginUser = (request, response, next) => {
     .query(`SELECT * FROM "user" WHERE email = $1`, [email])
     .then(async (results) => {
       if (results.rows.length === 0) {
-        return response.status(201).json({ message: "Invalid email address" });
+        return response.status(422).json({ message: "Invalid email address" });
       }
       const passMatch = await bcrypt.compare(
         password,
