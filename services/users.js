@@ -53,7 +53,9 @@ const createUser = async (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(new Error("An error occured. User already exists."));
+        return response
+          .status(409)
+          .json({ message: "An error occured. User already exists." });
       } else {
         next(e);
       }
@@ -74,7 +76,13 @@ const updateUser = async (request, response, next) => {
       response.status(200).send(`User modified with ID: ${user.id}`);
     })
     .catch((e) => {
-      next(e);
+      if (e.code == "23505") {
+        return response
+          .status(409)
+          .json({ message: "An error occured. User already exists." });
+      } else {
+        next(e);
+      }
     });
 };
 

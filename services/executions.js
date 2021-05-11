@@ -121,7 +121,9 @@ const createExecution = (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(new Error("An error occured. Test execution already exists."));
+        return response.status(409).json({
+          message: "An error occured. Test execution already exists.",
+        });
       } else {
         next(e);
       }
@@ -143,7 +145,13 @@ const updateExecution = (request, response, next) => {
       response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
-      next(e);
+      if (e.code == "23505") {
+        return response
+          .status(409)
+          .json({ message: "An error occured. Execution already exists." });
+      } else {
+        next(e);
+      }
     });
 };
 

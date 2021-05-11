@@ -50,11 +50,12 @@ const createWatched = (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(
-          new Error(
-            "An error occured. Execution is already being watched by this user."
-          )
-        );
+        return response
+          .status(409)
+          .json({
+            message:
+              "An error occured. Execution is already being watched by this user.",
+          });
       } else {
         next(e);
       }

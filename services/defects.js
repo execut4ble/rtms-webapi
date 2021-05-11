@@ -87,14 +87,8 @@ const getDefectInfo = (request, response, next) => {
 };
 
 const createDefect = (request, response, next) => {
-  const {
-    feature,
-    name,
-    description,
-    priority,
-    ticket,
-    is_active,
-  } = request.body;
+  const { feature, name, description, priority, ticket, is_active } =
+    request.body;
   const user = auth.authorizeRequest(request, response, next);
   const created_date = timestamp.unixTimeStamp();
 
@@ -117,7 +111,9 @@ const createDefect = (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(new Error("An error occured. Defect already exists."));
+        return response
+          .status(409)
+          .json({ message: "An error occured. Defect already exists." });
       } else {
         next(e);
       }
@@ -139,7 +135,13 @@ const updateDefect = (request, response, next) => {
       response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
-      next(e);
+      if (e.code == "23505") {
+        return response
+          .status(409)
+          .json({ message: "An error occured. Feature already exists." });
+      } else {
+        next(e);
+      }
     });
 };
 

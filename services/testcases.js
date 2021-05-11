@@ -50,7 +50,9 @@ const createTestcase = (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        next(new Error("An error occured. Test case already exists."));
+        return response
+          .status(409)
+          .json({ message: "An error occured. Testcase already exists." });
       } else {
         next(e);
       }
@@ -73,7 +75,13 @@ const updateTestcase = (request, response, next) => {
       response.status(200).json(results.rows[0]);
     })
     .catch((e) => {
-      next(e);
+      if (e.code == "23505") {
+        return response
+          .status(409)
+          .json({ message: "An error occured. Testcase already exists." });
+      } else {
+        next(e);
+      }
     });
 };
 
