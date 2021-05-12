@@ -50,15 +50,30 @@ const createWatched = (request, response, next) => {
     })
     .catch((e) => {
       if (e.code == "23505") {
-        return response
-          .status(409)
-          .json({
-            message:
-              "An error occured. Execution is already being watched by this user.",
-          });
+        return response.status(409).json({
+          message:
+            "An error occured. Execution is already being watched by this user.",
+        });
       } else {
         next(e);
       }
+    });
+};
+
+const getWatchState = (request, response, next) => {
+  const user = auth.authorizeRequest(request, response, next);
+  const id = parseInt(request.params.id);
+
+  pool
+    .query(
+      `SELECT EXISTS(SELECT EXISTS((SELECT * FROM "run" WHERE run = $1 AND "user" = $2)) FROM watched_run WHERE "user" = $2 AND "run" = $1) AS watched`,
+      [id, user.id]
+    )
+    .then((results) => {
+      response.status(200).json(results.rows);
+    })
+    .catch((e) => {
+      next(e);
     });
 };
 
@@ -81,6 +96,7 @@ const deleteWatched = (request, response, next) => {
 
 module.exports = {
   getWatched,
+  getWatchState,
   createWatched,
   deleteWatched,
 };

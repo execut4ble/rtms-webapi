@@ -74,19 +74,18 @@ const getInactiveExecutions = (request, response, next) => {
 };
 
 const getExecutionInfo = (request, response, next) => {
-  const user = auth.authorizeRequest(request, response, next);
+  auth.authorizeRequest(request, response, next);
   const id = parseInt(request.params.id);
 
   pool
     .query(
-      `SELECT run.*, created.username AS created_user, modified.username AS modified_user, (SELECT EXISTS((SELECT * FROM "run" WHERE run.id = $1 AND watched.user = $2))) AS watched
+      `SELECT run.*, created.username AS created_user, modified.username AS modified_user
       FROM "run" 
       INNER JOIN "user" AS created ON created_by = created.id 
       LEFT JOIN "user" AS modified ON last_modified_by = modified.id
-      LEFT JOIN "watched_run" AS watched ON run.id = watched.run
-      WHERE run.id = $1 
+      WHERE run.id = $1
       ORDER BY run.id ASC`,
-      [id, user.id]
+      [id]
     )
     .then((results) => {
       response.status(200).json(results.rows);

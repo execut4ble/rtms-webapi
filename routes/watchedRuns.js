@@ -4,6 +4,7 @@ const router = express.Router();
 
 // Watched executions
 router.get("/", db.getWatched);
+router.get("/:id", db.getWatchState);
 router.post("/:id", db.createWatched);
 router.delete("/:id", db.deleteWatched);
 
